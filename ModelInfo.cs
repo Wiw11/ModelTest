@@ -31,11 +31,11 @@ public class ModelInfo     // 模型测试基础信息类
     public void InitializePaths(string instantiationPath)     // 初始化各路径
     {
         InstantiationPath = instantiationPath;
-        TestPath = Path.Combine(HomePath, Type, Province);
+        TestPath = Path.Combine(HomePath, Type, Province, Path.GetFileName(instantiationPath));
         MainPath = Path.Combine(TestPath, MainFile);
         OutputPath = Path.Combine(TestPath, OutputDir);
         InputPath = Path.Combine(TestPath, InputFile);
-        ResultPath = Path.Combine(HomePath, "Result", Type, Province, Path.GetFileName(InstantiationPath));
+        ResultPath = Path.Combine(HomePath, "Result", Type, Province, Path.GetFileName(instantiationPath));
         GisPath = Path.Combine(ResultPath, "GIS");
     }
 }

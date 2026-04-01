@@ -2,6 +2,7 @@ namespace ModelTest;
 
 using System.Reflection;
 using System.Linq;
+using System.Threading.Tasks;
 using Daany;
 
 public class ModelTestController
@@ -12,6 +13,7 @@ public class ModelTestController
     public string ResultPathRoot { get; set; } = string.Empty;   // 模型测试结果保存路径
     public ModelConfigLoader modelConfigLoader;
     public ModelInfo model;
+    private static readonly object _fileLock = new object();
 
     public ModelTestController(string province, string type)
     {
@@ -31,7 +33,7 @@ public class ModelTestController
         }
     }
 
-    public SingleModelTest? GetSingleModelTest()
+    public SingleModelTest? GetSingleModelTest(ModelInfo modelInfo)
     {
         // 获取命名空间下的所有类
         Assembly assembly = Assembly.GetExecutingAssembly();
@@ -43,7 +45,7 @@ public class ModelTestController
         Type? specifiedType = typesInNamespace.FirstOrDefault(t => t.Name == classNameToInvoke);    // 获取指定类的Type对象
         if (specifiedType != null)
         {
-            var singleModelTest = Activator.CreateInstance(specifiedType,[Multiple,model]) as SingleModelTest;    // 创建类实例并传递参数
+            var singleModelTest = Activator.CreateInstance(specifiedType,[Multiple,modelInfo]) as SingleModelTest;    // 创建类实例并传递参数
             return singleModelTest;
         }
         else
@@ -52,24 +54,45 @@ public class ModelTestController
         }
     }
 
-    public void RunIteratively()     // 多实例循环计算
+    public async Task RunIteratively(bool async = true)     // 多实例循环计算
     {
         var structDirs = Directory.GetDirectories(model.SourcePath, "*结构数据*", SearchOption.AllDirectories);
 
         File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");
             
-        foreach (var instantiationDir in Directory.GetDirectories(structDirs[0]))      // 遍历所有实例
+        List<SingleModelTest> singleModelTests = new List<SingleModelTest>();
+        foreach (var instantiationDir in Directory.GetDirectories(structDirs[0]))      // 循环遍历所有实例
         {
-            var count = instantiationDir.Split('\\', '/').Last().Split('_').Length;
+            var count = instantiationDir.Split('\\', '/').Last().Split('_').Length;    // 确保实例目录名称合法
             if (count < 4)
             {
-                model.InitializePaths(instantiationDir);
-                SingleModelTest? singleModelTest = GetSingleModelTest();    // 获取指定模型测试类
+                ModelInfo modelInfo = modelConfigLoader.LoadSingleModel(Province, Type);
+                modelInfo.InitializePaths(instantiationDir);
+                SingleModelTest? singleModelTest = GetSingleModelTest(modelInfo);
                 if (singleModelTest != null)
+                {
+                    singleModelTests.Add(singleModelTest);
+                }
+            }
+        }
+
+        if (async)    // 异步执行
+        {
+            await Task.Run(() =>
+            {
+                Parallel.ForEach(singleModelTests, singleModelTest =>
                 {
                     singleModelTest.Execute();
                     MakeConclusion(singleModelTest);
-                }                
+                });
+            });
+        }
+        else     // 循环执行
+        {
+            foreach (var singleModelTest in singleModelTests)
+            {
+                singleModelTest.Execute();
+                MakeConclusion(singleModelTest);
             }
         }
     }
@@ -78,10 +101,12 @@ public class ModelTestController
     {   
         if (!File.Exists(Path.Combine(ResultPathRoot, "conclusion.csv")))
         {
-            throw new FileNotFoundException("conclusion.csv file not found.");
+            File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");
         }
-        model.InitializePaths(instantiationPath);
-        SingleModelTest? singleModelTest = GetSingleModelTest();
+
+        ModelInfo modelInfo = modelConfigLoader.LoadSingleModel(Province, Type);
+        modelInfo.InitializePaths(instantiationPath);
+        SingleModelTest? singleModelTest = GetSingleModelTest(modelInfo);
         if (singleModelTest != null)
         {
             singleModelTest.Execute();
@@ -97,19 +122,28 @@ public class ModelTestController
             if (Convert.ToDouble(analysis[0,1]) <= Convert.ToDouble(analysis[1,1]) && 
                 Convert.ToDouble(analysis[1,1]) <= Convert.ToDouble(analysis[2,1]))
             {
-                File.AppendAllText(Path.Combine(Tools.GetParentPath(model.ResultPath), "conclusion.csv"), 
-                    $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},Yes,Yes\n");
+                lock (_fileLock)
+                {
+                   File.AppendAllText(Path.Combine(Tools.GetParentPath(singleModelTest.modelInfo.ResultPath), "conclusion.csv"), 
+                    $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},Yes,Yes\n"); 
+                }
             }
             else
             {
-                File.AppendAllText(Path.Combine(Tools.GetParentPath(model.ResultPath), "conclusion.csv"), 
-                    $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},Yes,No\n");
+                lock (_fileLock)
+                {
+                    File.AppendAllText(Path.Combine(Tools.GetParentPath(singleModelTest.modelInfo.ResultPath), "conclusion.csv"), 
+                        $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},Yes,No\n");
+                }
             }
         }
         else
         {
-            File.AppendAllText(Path.Combine(Tools.GetParentPath(model.ResultPath), "conclusion.csv"), 
+            lock (_fileLock)
+            {
+                File.AppendAllText(Path.Combine(Tools.GetParentPath(singleModelTest.modelInfo.ResultPath), "conclusion.csv"), 
                 $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},No,No\n");
+            }
         }
     }
 }

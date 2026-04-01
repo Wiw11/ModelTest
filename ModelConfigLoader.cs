@@ -49,7 +49,17 @@ public class ModelConfigLoader        // 载入模型元数据
         {
             if (model.Province == province && model.Type == type)
             {
-                return model;
+                var modelCopy = new ModelInfo      // 建立模型副本
+                {
+                    Province = model.Province,
+                    Type = model.Type,
+                    MainFile = model.MainFile,
+                    InputFile = model.InputFile,
+                    OutputDir = model.OutputDir,
+                    SourcePath = model.SourcePath,
+                    SourceRoot = model.SourceRoot
+                };
+                return modelCopy;
             }
         }
         return new ModelInfo();
