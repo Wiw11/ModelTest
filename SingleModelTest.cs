@@ -5,6 +5,7 @@ public class SingleModelTest      //单实例模型测试类
     public double Multiple { get; set; }       // 流量放大倍数  
     public double CurrentMultiple { get; set; }       // 当前流量放大倍数  
     public bool IsSuccess { get; set; }        // 模型运行是否成功
+    public bool RunWithConsole { get; set; }    // 是否弹窗运行外部程序
     public ModelInfo modelInfo;
 
     public SingleModelTest(double multiple, ModelInfo model)
@@ -12,6 +13,7 @@ public class SingleModelTest      //单实例模型测试类
         Multiple = multiple;
         CurrentMultiple = 1.0;
         IsSuccess = false;
+        RunWithConsole = false;
         modelInfo = model;
     }
 
@@ -83,7 +85,18 @@ public class SingleModelTest      //单实例模型测试类
         // 运行可执行文件
         if (File.Exists(modelInfo.MainPath))
         {
-            ExternalProcessRunner.Run(modelInfo.MainPath);
+            Directory.SetCurrentDirectory(modelInfo.TestPath);    // 进入模型测试空间
+
+            if (RunWithConsole)
+            {
+                ExternalProcessRunner.RunWithConsole(modelInfo.MainPath);
+            }
+            else
+            {
+                ExternalProcessRunner.Run(modelInfo.MainPath);
+            }
+            
+            Directory.SetCurrentDirectory(modelInfo.HomePath);    // 回到根目录
         }
         else
         {

@@ -5,6 +5,22 @@ using System.Text;
 
 public class ExternalProcessRunner
 {
+    public static void RunWithConsole(string exePath, string arguments = "")    // 弹窗运行外部程序
+    {
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = exePath,
+            Arguments = arguments,
+            CreateNoWindow = false,          // 弹出新窗口
+            UseShellExecute = true,        // 使用shell
+        };
+        
+        using var process = new Process { StartInfo = processInfo };
+
+        process.Start();
+        process.WaitForExit();
+    }
+
     /// <summary>
     /// 运行外部程序并实时显示输出
     /// </summary>

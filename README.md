@@ -7,13 +7,13 @@
 - 水动力学模型
     - 标识：Hydrodynamic
     - 原文件路径：`D:\Projects\水科院模型\水动力学模型`
-    - 测试目录：`.\Hydrodynamic\[省份]`
-    - 运行结果目录：`.\Result\Hydrodynamic\[省份]\[实例]`
+    - 测试目录：`.\Hydrodynamic\[省份]\[实例]`
+    - 运行结果目录：`.\Hydrodynamic\[省份]\Result\[实例]`
 - 简化淹没模型
     - 标识：Submerged
     - 原文件路径：`D:\Projects\水科院模型\简化淹没模型`
-    - 测试目录：`.\Submerged\[省份]`
-    - 运行结果目录：`.\Result\Submerged\[省份]\[实例]`
+    - 测试目录：`.\Submerged\[省份]\[实例]`
+    - 运行结果目录：`.\Submerged\[省份]\Result\[实例]`
 
 ### 项目结构
 ```
@@ -53,13 +53,15 @@ ModelTest/
 cd ModelTest
 
 # 运行示例
-dotnet run Guizhou Hydrodynamic   # 运行贵州省水动力学模型
-dotnet run Shandong Submerged     # 运行山东省简化淹没模型
+dotnet run Guizhou Hydrodynamic   # 循环运行贵州省水动力学模型的多个实例
+dotnet run Guangdong Submerged true    # 异步运行山东省简化淹没模型的多个实例
+dotnet run Shandong Hydrodynamic     # 运行山东省水动力模型的002_WEB03008T0000000实例
 ```
 
 ## 命令行参数
 
-| 位置参数 | 含义 | 示例 |
-|------|------|-----|
-| -Province | 省份全拼 | Guizhou |
-| -Type | 模型类型 | Hydrodynamic |
+| 参数位置 | 含义 | 是否必含 | 说明 |
+|------|------|-----|-----|
+| 1 | 省份 | 是 | 省份全拼，如`Guizhou` |
+| 2 | 模型类型 | 是 | 包括水动力和淹没两类，分别对应`Hydrodynamic`和`Submerged` |
+| 3 | 执行模式 | 否 | 传入`true`时异步执行多个实例，传入`false`时循环执行多个实例，传入示例名称时执行指定单个实例。默认为`false` |

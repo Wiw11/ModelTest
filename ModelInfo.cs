@@ -35,7 +35,7 @@ public class ModelInfo     // 模型测试基础信息类
         MainPath = Path.Combine(TestPath, MainFile);
         OutputPath = Path.Combine(TestPath, OutputDir);
         InputPath = Path.Combine(TestPath, InputFile);
-        ResultPath = Path.Combine(HomePath, "Result", Type, Province, Path.GetFileName(instantiationPath));
+        ResultPath = Path.Combine(Tools.GetParentPath(TestPath), "Result", Path.GetFileName(instantiationPath));
         GisPath = Path.Combine(ResultPath, "GIS");
     }
 }

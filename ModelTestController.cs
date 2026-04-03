@@ -21,7 +21,7 @@ public class ModelTestController
         Type = type;
         modelConfigLoader = new ModelConfigLoader();
         model = modelConfigLoader.LoadSingleModel(province, type);
-        ResultPathRoot = Path.Combine(model.HomePath, "Result", Type, Province);
+        ResultPathRoot = Path.Combine(model.HomePath, Type, Province, "Result");
         if (!Directory.Exists(ResultPathRoot))
         {
             Directory.CreateDirectory(ResultPathRoot);
@@ -54,11 +54,11 @@ public class ModelTestController
         }
     }
 
-    public async Task RunIteratively(bool async = true)     // 多实例循环计算
+    public async Task RunIteratively(bool async = false)     // 多实例循环计算
     {
         var structDirs = Directory.GetDirectories(model.SourcePath, "*结构数据*", SearchOption.AllDirectories);
 
-        File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");
+        File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");    // 重建结论文件，带清空功能
             
         List<SingleModelTest> singleModelTests = new List<SingleModelTest>();
         foreach (var instantiationDir in Directory.GetDirectories(structDirs[0]))      // 循环遍历所有实例
@@ -97,9 +97,12 @@ public class ModelTestController
         }
     }
 
-    public void RunSingleModel(string instantiationPath)     // 单实例计算
+    public void RunSingleModel(string instantiationDir)     // 单实例计算
     {   
-        if (!File.Exists(Path.Combine(ResultPathRoot, "conclusion.csv")))
+        var structDirs = Directory.GetDirectories(model.SourcePath, "*结构数据*", SearchOption.AllDirectories);
+        string instantiationPath = Path.Combine(structDirs[0], instantiationDir);
+
+        if (!File.Exists(Path.Combine(ResultPathRoot, "conclusion.csv")))     // 增量写入，不清空
         {
             File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");
         }
@@ -142,7 +145,7 @@ public class ModelTestController
             lock (_fileLock)
             {
                 File.AppendAllText(Path.Combine(Tools.GetParentPath(singleModelTest.modelInfo.ResultPath), "conclusion.csv"), 
-                $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},No,No\n");
+                $"{Path.GetFileName(singleModelTest.modelInfo.ResultPath)},No,--\n");
             }
         }
     }
