@@ -44,6 +44,11 @@ public class Tools
             {
                 string newDestinationDir = Path.Combine(destDir, subDir.Name);
                 CopyDirectory(subDir.FullName, newDestinationDir, true);
+                foreach (FileInfo file in subDir.GetFiles())
+                {
+                    string targetFilePath = Path.Combine(destDir, file.Name);
+                    file.CopyTo(targetFilePath, true);
+                }
             }
         }
     }

@@ -138,7 +138,8 @@ public class SingleModelTest      //单实例模型测试类
         var pythonScript = Path.Combine(modelInfo.HomePath, "postprocessing.py");
         string functionName = $"{modelInfo.Province}{modelInfo.Type}";
         string arguments = $"\"{pythonScript}\" \"{functionName}\" \"{modelInfo.OutputPath}\" \"{modelInfo.ResultPath}\" {CurrentMultiple}";
-        ExternalProcessRunner.Run(@".\.venv\Scripts\python.exe", arguments);
+        AppConfig appConfig = new AppConfig();
+        ExternalProcessRunner.Run(appConfig.PythonCommand, arguments);
     }
 
     public void Execute()   //执行单实例模型测试
@@ -176,7 +177,7 @@ public class SingleModelTest      //单实例模型测试类
                     CalculateSubmergedArea();
 
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"{modelInfo.Province} {modelInfo.Type} runs successfully!");
+                    Console.WriteLine($"{modelInfo.Province} {modelInfo.Type} flow{CurrentMultiple} {Path.GetFileName(modelInfo.InstantiationPath)} runs successfully!");
                     Console.ResetColor();
 
                     CurrentMultiple *= Multiple;
@@ -184,7 +185,7 @@ public class SingleModelTest      //单实例模型测试类
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"{modelInfo.Province} {modelInfo.Type} failed to run!");
+                    Console.WriteLine($"{modelInfo.Province} {modelInfo.Type} flow{CurrentMultiple} {Path.GetFileName(modelInfo.InstantiationPath)} failed to run!");
                     Console.ResetColor();
                     break;
                 }

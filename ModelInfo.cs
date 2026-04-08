@@ -2,7 +2,7 @@ namespace ModelTest;
 
 public class ModelInfo     // 模型测试基础信息类
 {
-    public string HomePath { get; set; } = string.Empty;    // 根目录
+    public string HomePath { get; set; } = string.Empty;    // 项目根目录
 
     public string Province { get; set; } = string.Empty;     // 省份
     public string Type { get; set; } = string.Empty;         // 模型类型
@@ -13,7 +13,7 @@ public class ModelInfo     // 模型测试基础信息类
     
     public string InstantiationPath { get; set; } = string.Empty;       // 流域实例数据路径
 
-    public string SourceRoot { get; set; } = @"D:\Projects\水科院模型\";        // 模型源文件根目录   
+    public string SourceRoot { get; set; } = string.Empty;        // 模型源文件根目录   
     public string TestPath { get; set; } = string.Empty;      // 测试空间路径
     public string MainPath { get; set; } = string.Empty;      // 模型可执行文件路径
     public string OutputPath { get; set; } = string.Empty;    // 模型输出目录路径    
@@ -24,8 +24,9 @@ public class ModelInfo     // 模型测试基础信息类
 
     public ModelInfo()
     {
-        // 获取当前目录
-        HomePath = @"D:\Projects\ModelTest";
+        AppConfig appConfig = new AppConfig();
+        HomePath = appConfig.HomePath;
+        SourceRoot = appConfig.SourceRoot;
     }
 
     public void InitializePaths(string instantiationPath)     // 初始化各路径
@@ -33,8 +34,8 @@ public class ModelInfo     // 模型测试基础信息类
         InstantiationPath = instantiationPath;
         TestPath = Path.Combine(HomePath, Type, Province, Path.GetFileName(instantiationPath));
         MainPath = Path.Combine(TestPath, MainFile);
-        OutputPath = Path.Combine(TestPath, OutputDir);
         InputPath = Path.Combine(TestPath, InputFile);
+        OutputPath = Path.Combine(TestPath, OutputDir);
         ResultPath = Path.Combine(Tools.GetParentPath(TestPath), "Result", Path.GetFileName(instantiationPath));
         GisPath = Path.Combine(ResultPath, "GIS");
     }

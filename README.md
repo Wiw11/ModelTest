@@ -19,6 +19,7 @@
 ```
 ModelTest/
 ├── ModelInfo.cs          # 数据模型定义
+├── AppConfig.cs          # 项目配置数据模型
 ├── ModelConfigLoader.cs  # 配置模型加载器
 ├── SingleModelTest.cs    # 单模型测试基类
 ├── ModelsTest.cs         # 具体省份模型测试类
@@ -31,6 +32,7 @@ ModelTest/
 ├── model_main.csv        # 模型配置信息
 ├── convertion.py         # 数据转换
 ├── postprocessing.py     # 后处理脚本
+├── application.json      # 项目配置文件
 └── pyproject.toml        # Python环境配置文件
 ```
 
@@ -54,7 +56,7 @@ cd ModelTest
 
 # 运行示例
 dotnet run Guizhou Hydrodynamic   # 循环运行贵州省水动力学模型的多个实例
-dotnet run Guangdong Submerged true    # 异步运行山东省简化淹没模型的多个实例
+dotnet run Guangdong Submerged true    # 异步运行广东省简化淹没模型的多个实例
 dotnet run Shandong Hydrodynamic     # 运行山东省水动力模型的002_WEB03008T0000000实例
 ```
 

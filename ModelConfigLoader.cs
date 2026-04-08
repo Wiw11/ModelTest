@@ -1,9 +1,6 @@
 namespace ModelTest;
 
-using CsvHelper;
-using CsvHelper.Configuration;
 using Daany;
-using System.Globalization;
 
 public class ModelConfigLoader        // 载入模型元数据
 {
@@ -12,7 +9,8 @@ public class ModelConfigLoader        // 载入模型元数据
 
     public ModelConfigLoader(string path = "model_main.csv")
     {
-        csvPath = "D:\\Projects\\ModelTest" + "\\" + path;
+        AppConfig appConfig = new AppConfig();
+        csvPath = appConfig.HomePath + "\\" + path;
         if (!File.Exists(csvPath))
         {
             Console.WriteLine($"配置文件不存在: {csvPath}");
