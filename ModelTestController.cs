@@ -26,11 +26,6 @@ public class ModelTestController
         {
             Directory.CreateDirectory(ResultPathRoot);
         }
-        else
-        {
-            Directory.Delete(ResultPathRoot, true);
-            Directory.CreateDirectory(ResultPathRoot);
-        }
     }
 
     public SingleModelTest? GetSingleModelTest(ModelInfo modelInfo)
@@ -58,13 +53,18 @@ public class ModelTestController
     {
         var structDirs = Directory.GetDirectories(model.SourcePath, "*结构数据*", SearchOption.AllDirectories);
 
-        File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");    // 重建结论文件，带清空功能
+        if (!File.Exists(Path.Combine(ResultPathRoot, "conclusion.csv")))     // 增量写入，不清空
+        {
+            File.WriteAllText(Path.Combine(ResultPathRoot, "conclusion.csv"), "Basin,IsSuccess,IsPositive\n");
+        }
+
+        var df = DataFrame.FromCsv(Path.Combine(ResultPathRoot, "conclusion.csv"), sep: ',');
             
         List<SingleModelTest> singleModelTests = new List<SingleModelTest>();
         foreach (var instantiationDir in Directory.GetDirectories(structDirs[0]))      // 循环遍历所有实例
         {
-            var count = instantiationDir.Split('\\', '/').Last().Split('_').Length;    // 确保实例目录名称合法
-            if (count < 4)
+            var count = instantiationDir.Split('\\', '/').Last().Split('_').Length;    
+            if (count < 4 && !df["Basin"].Contains(Path.GetFileName(instantiationDir)))    // 确保实例目录名称合法且未被执行过
             {
                 ModelInfo modelInfo = modelConfigLoader.LoadSingleModel(Province, Type);
                 modelInfo.InitializePaths(instantiationDir);
@@ -78,14 +78,24 @@ public class ModelTestController
 
         if (async)    // 异步执行
         {
-            await Task.Run(() =>
+            int maxConcurrency = 5;     // 控制并发数
+            using var semaphore = new SemaphoreSlim(maxConcurrency);
+            var tasks = new List<Task>();
+            
+            foreach (var singleModelTest in singleModelTests)
             {
-                Parallel.ForEach(singleModelTests, singleModelTest =>
+                await semaphore.WaitAsync();
+                var test = singleModelTest;  // 捕获当前变量
+                
+                tasks.Add(Task.Run(() =>
                 {
-                    singleModelTest.Execute();
-                    MakeConclusion(singleModelTest);
-                });
-            });
+                    test.Execute();
+                    MakeConclusion(test);
+                    semaphore.Release();
+                }));
+            }
+            
+            await Task.WhenAll(tasks);
         }
         else     // 循环执行
         {
@@ -119,9 +129,10 @@ public class ModelTestController
 
     public void MakeConclusion(SingleModelTest singleModelTest)     // 生成模型测试结论
     {
-        if (singleModelTest.IsSuccess)
+        var analysis = DataFrame.FromCsv(Path.Combine(singleModelTest.modelInfo.ResultPath,"analysis.csv"), sep: ',');
+        
+        if (singleModelTest.IsSuccess && analysis.RowCount() >= 3)
         {   
-            var analysis = DataFrame.FromCsv(Path.Combine(singleModelTest.modelInfo.ResultPath,"analysis.csv"), sep: ',');
             if (Convert.ToDouble(analysis[0,1]) <= Convert.ToDouble(analysis[1,1]) && 
                 Convert.ToDouble(analysis[1,1]) <= Convert.ToDouble(analysis[2,1]))
             {
