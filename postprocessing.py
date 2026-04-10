@@ -380,6 +380,9 @@ class PostProcessing():
     def HenanSubmerged(self):
         self.FujianSubmerged()
 
+    def HebeiSubmerged(self):
+        self.FujianSubmerged()
+
     def BeijingSubmerged(self):
         self.FujianSubmerged()
 

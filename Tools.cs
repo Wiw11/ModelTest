@@ -52,4 +52,17 @@ public class Tools
             }
         }
     }
+
+    public static void PostRequest(string url, string jsonPath)     // 发送POST请求
+    {
+        using (var client = new HttpClient())
+        {
+            var content = new StringContent(File.ReadAllText(jsonPath), System.Text.Encoding.UTF8, "application/json");
+            var response = client.PostAsync(url, content).Result;
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"请求失败，状态码: {response.StatusCode}");
+            }
+        }
+    }
 }

@@ -17,7 +17,7 @@ public class SingleModelTest      //单实例模型测试类
         modelInfo = model;
     }
 
-    public void CopyExecutables()   //搜索并复制可执行文件
+    public virtual void CopyExecutables()   //搜索并复制可执行文件
     {
         var dir = Directory.GetDirectories(modelInfo.SourcePath, "*可执行*", SearchOption.AllDirectories);
         var mainDir = Tools.GetSpecialLevelFiles(dir[0], modelInfo.MainFile);
@@ -62,26 +62,8 @@ public class SingleModelTest      //单实例模型测试类
     public virtual void Preprocess()   //执行前处理
     {}
 
-    public void RunModel()   //运行模型
+    public virtual void ExecutableCore()     // 程序启动核心
     {
-        // 创建输出目录
-        if (! Directory.Exists(modelInfo.OutputPath))
-        {
-            Directory.CreateDirectory(modelInfo.OutputPath);
-        }
-        else
-        {
-            Directory.Delete(modelInfo.OutputPath, true);    // 清空模型输出目录
-            Directory.CreateDirectory(modelInfo.OutputPath);
-        }
-        
-        // 创建init.txt使输出目录非空
-        var initFile = Path.Combine(modelInfo.OutputPath, "init.txt");
-        File.WriteAllText(initFile, DateTime.Now.ToString());
-
-        // 记录初始状态
-        var initialFiles = Directory.GetFiles(modelInfo.OutputPath, "*", SearchOption.AllDirectories).Select(f => new FileInfo(f)).ToList();
-        
         // 运行可执行文件
         if (File.Exists(modelInfo.MainPath))
         {
@@ -106,6 +88,29 @@ public class SingleModelTest      //单实例模型测试类
             IsSuccess = false;
             return;
         }
+    }
+
+    public void RunModel()   //运行模型
+    {
+        // 创建输出目录
+        if (! Directory.Exists(modelInfo.OutputPath))
+        {
+            Directory.CreateDirectory(modelInfo.OutputPath);
+        }
+        else
+        {
+            Directory.Delete(modelInfo.OutputPath, true);    // 清空模型输出目录
+            Directory.CreateDirectory(modelInfo.OutputPath);
+        }
+        
+        // 创建init.txt使输出目录非空
+        var initFile = Path.Combine(modelInfo.OutputPath, "init.txt");
+        File.WriteAllText(initFile, DateTime.Now.ToString());
+
+        // 记录初始状态
+        var initialFiles = Directory.GetFiles(modelInfo.OutputPath, "*", SearchOption.AllDirectories).Select(f => new FileInfo(f)).ToList();
+        
+        ExecutableCore();   // 执行
 
         // 记录最终状态
         var finalFiles = Directory.GetFiles(modelInfo.OutputPath, "*", SearchOption.AllDirectories).Select(f => new FileInfo(f)).ToList();
@@ -163,8 +168,8 @@ public class SingleModelTest      //单实例模型测试类
                     CopyExecutables();
                     CopyShapeFiles();
                     CopyInputFiles();
-                    ModifyConfigFiles();
                     Preprocess();
+                    ModifyConfigFiles();
 
                     File.WriteAllText(Path.Combine(modelInfo.ResultPath, "analysis.csv"), "Multiple,MaxSubmergedArea,Time\n");   // 新建分析结果文件
                 }
