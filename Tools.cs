@@ -28,9 +28,10 @@ public class Tools
         if (!dir.Exists)
             return;
 
-        DirectoryInfo[] dirs = dir.GetDirectories();
-
-        Directory.CreateDirectory(destDir);
+        if (!Directory.Exists(destDir))
+        {
+            Directory.CreateDirectory(destDir);
+        }
 
         foreach (FileInfo file in dir.GetFiles())
         {
@@ -40,16 +41,37 @@ public class Tools
 
         if (recursive)
         {
+            DirectoryInfo[] dirs = dir.GetDirectories();    
             foreach (DirectoryInfo subDir in dirs)
             {
                 string newDestinationDir = Path.Combine(destDir, subDir.Name);
                 CopyDirectory(subDir.FullName, newDestinationDir, true);
-                foreach (FileInfo file in subDir.GetFiles())
-                {
-                    string targetFilePath = Path.Combine(destDir, file.Name);
-                    file.CopyTo(targetFilePath, true);
-                }
             }
+        }
+    }
+
+    public static void CopyBottomFile(string sourceDir, string destDir)    // 复制底层文件
+    {
+        var dir = new DirectoryInfo(sourceDir);
+
+        if (!dir.Exists)
+            return;
+
+        if (!Directory.Exists(destDir))
+        {
+            Directory.CreateDirectory(destDir);
+        }
+
+        foreach (FileInfo file in dir.GetFiles())
+        {
+            string targetFilePath = Path.Combine(destDir, file.Name);
+            file.CopyTo(targetFilePath, true);
+        }
+
+        DirectoryInfo[] dirs = dir.GetDirectories();
+        foreach (DirectoryInfo subDir in dirs)
+        {
+            CopyBottomFile(subDir.FullName, destDir);
         }
     }
 

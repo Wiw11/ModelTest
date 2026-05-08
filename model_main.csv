@@ -1,7 +1,7 @@
 ﻿Province,Type,Main,InputFile,OutputDir,SourcePath
 Anhui,Submerged,simplifiedinundate.exe,section_flow.csv,results,简化淹没模型\2024年安徽简化淹没模型\2024年度简化淹没范围与水深分析模型建设成果（20260303）\简化淹没范围与水深分析模型建设成果
 Heilongjiang,Submerged,inundation_model.jar,input_data.csv,results,简化淹没模型\2024年黑龙江简化淹没模型\2024年度简化淹没范围与水深分析模型建设成果\简化淹没范围与水深分析模型建设成果
-Guangxi,Submerged,inundation.bat,Q.csv,results,简化淹没模型\2024年广西简化淹没模型\2024年度简化淹没范围与水深分析模型建设成果\柳江270-简化淹没范围与水深分析模型建设成果
+Guangxi,Submerged,inundation.bat,Q.csv,results,简化淹没模型\2024年广西简化淹没模型\柳江270-简化淹没范围与水深分析模型建设成果
 Zhejiang,Submerged,main.exe,计算水深.csv,results,简化淹没模型\浙江简化淹没模型
 Jilin,Submerged,run.bat,input,.running\output,简化淹没模型\吉林简化淹没模型
 Jiangxi,Submerged,run.bat,input,.running\output,简化淹没模型\2024年江西简化淹没模型
@@ -13,7 +13,7 @@ Gansu,Submerged,simplifiedinundate.exe,输入数据样例_Q.csv,results,简化�
 Qinghai,Submerged,simplifiedinundate.exe,输入数据样例_Q.csv,results,简化淹没模型\2024年青海简化淹没模型\2024年度简化淹没范围与水深分析模型建设成果\简化淹没范围与水深分析模型建设成果
 Fujian,Submerged,simplifiedinundate.exe,输入数据样例_Q.csv,results,简化淹没模型\2025年福建简化淹没模型\简化淹没范围与水深分析模型建设成果
 Shandong,Submerged,inundation_model.jar,input_data.csv,results,简化淹没模型\2023年山东简化淹没模型\简化淹没范围与水深分析模型建设成果
-Guangdong,Submerged,test_loadfile.exe,data_file.csv,Templates,简化淹没模型\2024年广东简化淹没模型
+Guangdong,Submerged,test_loadfile.exe,data_file.csv,Templates,简化淹没模型\2024年广东简化淹没模型\简化淹没范围与水深分析模型建设成果
 Hunan,Submerged,2DFloodEXE.exe,model\inflow\plan.iq,model\output\plan,简化淹没模型\2024年湖南简化淹没模型\简化淹没范围与水深分析模型建设成果
 Xinjiang1,Submerged,startup_service.bat,,,简化淹没模型\2024年新疆简化淹没模型\长科院承担19个小流域
 Xinjiang2,Submerged,start.bat,,,简化淹没模型\2024年新疆简化淹没模型\北京慧图承担18个小流域

@@ -59,6 +59,192 @@ public class ShandongHydrodynamic: SingleModelTest
     }
 }
 
+public class GuangdongHydrodynamic: SingleModelTest
+{
+    public GuangdongHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        RunWithConsole = true;
+        Directory.CreateDirectory(Path.Combine(modelInfo.TestPath, "Template", Path.GetFileName(modelInfo.TestPath)));
+        Directory.GetFiles(Tools.GetParentPath(modelInfo.InputPath), "*.*", SearchOption.TopDirectoryOnly).ToList().ForEach(file =>
+        {
+            var destFile = Path.Combine(modelInfo.TestPath, "Template", Path.GetFileName(modelInfo.TestPath), Path.GetFileName(file));
+            File.Copy(file, destFile, true);
+        });
+    }
+
+    public override void ModifyFlowFiles()
+    {
+        // 遍历目标路径下的所有.dat文件
+        foreach (var file in Directory.GetFiles(Path.Combine(modelInfo.TestPath, "Template", Path.GetFileName(modelInfo.TestPath)), "*.dat"))
+        {
+            // 读取文件内容
+            var lines = File.ReadAllText(file, System.Text.Encoding.UTF8);
+            
+            // 定义正则表达式模式
+            var pattern = @"(TV\s+\d+\s+)(\d+\.\d+)";
+            var regex = new Regex(pattern);
+
+            // 替换匹配到的内容
+            var newContent = regex.Replace(lines, match =>
+            {
+                // 获取捕获组的值
+                var group1 = match.Groups[1].Value;
+                var group2 = match.Groups[2].Value;
+
+                // 将捕获的数字转换为浮点数进行计算
+                var result = float.Parse(group2) * Multiple;
+
+                // 返回替换后的字符串
+                return $"{group1} {result}";
+            });
+
+            // 将处理后的内容写回原文件
+            File.WriteAllText(file, newContent, System.Text.Encoding.Default);
+        }
+    }
+
+    public override void Postprocess()
+    {
+        var destFile = Path.Combine(Path.Combine(modelInfo.TestPath, "Template"), "CellResult.txt");
+        File.Copy(Path.Combine(modelInfo.TestPath, "Template", Path.GetFileName(modelInfo.TestPath), "CellResult.txt"), destFile, true);
+    }
+}
+
+public class AnhuiHydrodynamic: SingleModelTest
+{
+    public AnhuiHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        RunWithConsole = true;
+    }
+
+    public override void ModifyFlowFiles()
+    {
+        foreach (var file in Directory.GetFiles(Path.Combine(modelInfo.TestPath, "Template"), "*.dat"))
+        {
+            // 读取文件内容
+            var lines = File.ReadAllText(file, System.Text.Encoding.UTF8);
+            
+            // 定义正则表达式模式
+            var pattern = @"(TV\s+\d+\s+)(\d+\.?\d+)";
+            var regex = new Regex(pattern);
+
+            // 替换匹配到的内容
+            var newContent = regex.Replace(lines, match =>
+            {
+                // 获取捕获组的值
+                var group1 = match.Groups[1].Value;
+                var group2 = match.Groups[2].Value;
+
+                // 将捕获的数字转换为浮点数进行计算
+                var result = float.Parse(group2) * Multiple;
+
+                // 返回替换后的字符串
+                return $"{group1} {result}";
+            });
+
+            // 将处理后的内容写回原文件
+            File.WriteAllText(file, newContent, System.Text.Encoding.Default);
+        }
+    }
+}
+
+public class HeilongjiangHydrodynamic: SingleModelTest
+{
+    public HeilongjiangHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void ModifyFlowFiles()
+    {
+        string[] lines = File.ReadAllLines(modelInfo.InputPath);
+        string[] newLines = new string[lines.Length];
+        Array.Copy(lines, 0, newLines, 0, 2);   // 保留前两行不变
+        for (int i = 2; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            var space = new Regex(@"\s+");
+            string lineWithoutSpace = space.Replace(line, ",");
+            string[] values = lineWithoutSpace.Split(",", StringSplitOptions.RemoveEmptyEntries);
+            string newLine = string.Empty;
+            for (int j = 0; j < values.Length; j++)
+            {
+                if (j == 0)
+                {
+                    newLine += values[j] + "   ";
+                }
+                else
+                {
+                    double value = double.Parse(values[j]) * Multiple;
+                    newLine += value + "   ";
+                }
+            }
+            newLines[i] = newLine.TrimEnd();
+        }
+        File.WriteAllLines(modelInfo.InputPath, newLines);
+    }
+
+    public override void ModifyConfigFiles()
+    {
+        string[] lines = File.ReadAllLines(modelInfo.MainPath);
+        lines[3] = @"set HOMETEL=D:\telemac\V8P4";
+        File.WriteAllLines(modelInfo.MainPath, lines);
+    }
+}
+
+public class ShanxiHydrodynamic: SingleModelTest
+{
+    public ShanxiHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+}
+
+public class XizangHydrodynamic: SingleModelTest
+{
+    public XizangHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        File.WriteAllText(Path.Combine(modelInfo.TestPath, "run.bat"), @".\.venv\Scripts\python.exe run.py");
+        modelInfo.MainPath = Path.Combine(modelInfo.TestPath, "run.bat");
+    }
+
+    public override void ModifyFlowFiles()
+    {
+        foreach (var file in Directory.GetFiles(modelInfo.InputPath, "h_BC"))
+        {
+            string[] lines = File.ReadAllLines(file);
+            string[] newLines = new string[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                string pattern = @"^(\d+)\s+(\d+)";
+                Match match = Regex.Match(line, pattern);
+                if (match.Success)
+                {
+                    string id = match.Groups[1].Value;
+                    double value = double.Parse(match.Groups[2].Value) * Multiple;
+                    newLines[i] = $"{id} {value}";
+                }
+                else
+                {
+                    newLines[i] = line;
+                }
+            }
+            File.WriteAllLines(modelInfo.InputPath, newLines);  
+        }
+    }
+}
+
 public class AnhuiSubmerged: SingleModelTest
 {
     public AnhuiSubmerged(double multiple, ModelInfo model) : base(multiple, model)
@@ -260,9 +446,79 @@ public class HebeiSubmerged: HenanSubmerged
 
     public override void Postprocess()
     {
-        // Console.WriteLine(modelInfo.OutputPath);
         string subDir1 = Directory.GetDirectories(modelInfo.OutputPath)[0];
         string subDir2 = Directory.GetDirectories(subDir1)[0];
         modelInfo.OutputPath = subDir2;
+    }
+}
+
+public class GuangxiSubmerged: AnhuiSubmerged
+{
+    public GuangxiSubmerged(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        RunWithConsole = true;
+    }
+
+    public override void ModifyConfigFiles()
+    {}
+}
+
+public class GuangdongSubmerged: SingleModelTest
+{
+    public GuangdongSubmerged(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        RunWithConsole = true;
+        string inputDir = Path.Combine(modelInfo.TestPath, "Templates", Path.GetFileName(modelInfo.TestPath),"results");
+        Directory.CreateDirectory(inputDir);
+        Tools.CopyDirectory(Path.Combine(modelInfo.TestPath, "results"), inputDir, true);
+        modelInfo.InputPath = Path.Combine(inputDir, "xaj_para", modelInfo.InputFile);
+        modelInfo.OutputPath = Path.Combine(modelInfo.OutputPath,Path.GetFileName(modelInfo.TestPath),"results",Path.GetFileName(modelInfo.TestPath)+"_depth");
+    }
+
+    public override void ModifyConfigFiles()
+    {
+        string[] lines = File.ReadAllLines(Path.Combine(modelInfo.TestPath,"config.yml"));
+        lines[5] = "  base_folder: ./Templates/";
+        File.WriteAllLines(Path.Combine(modelInfo.TestPath,"config.yml"), lines);
+    }
+
+    public override void ModifyFlowFiles()
+    {
+        string[] lines = File.ReadAllLines(modelInfo.InputPath);
+        string[] newLines = new string[lines.Length];
+        Array.Copy(lines, 0, newLines, 0, 1); 
+        for (int i = 1; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            string[] values = line.Split(",", StringSplitOptions.RemoveEmptyEntries);
+            string newLine = string.Empty;
+            for (int j = 0; j < values.Length; j++)
+            {
+                if (j == 0 || j == 1)
+                {
+                    newLine += values[j] + ",";
+                }
+                else if (j == values.Length - 1)
+                {
+                    double value = double.Parse(values[j]) * Multiple;
+                    newLine += value;
+                }
+                else
+                {
+                    double value = double.Parse(values[j]) * Multiple;
+                    newLine += value + ",";
+                }
+            }
+            newLines[i] = newLine.TrimEnd();
+        }
+        File.WriteAllLines(modelInfo.InputPath, newLines);
     }
 }

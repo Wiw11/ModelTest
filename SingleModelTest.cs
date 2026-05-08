@@ -50,6 +50,7 @@ public class SingleModelTest      //单实例模型测试类
         if (Directory.Exists(modelInfo.InstantiationPath))
         {
             Tools.CopyDirectory(modelInfo.InstantiationPath, modelInfo.TestPath, true);
+            Tools.CopyBottomFile(modelInfo.InstantiationPath, modelInfo.TestPath);
         }
     }
 

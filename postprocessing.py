@@ -286,8 +286,7 @@ class PostProcessing():
         max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
 
     def GuangdongSubmerged(self):
-        result_dir = self.input_dir + '\\results\\{}_depth'.format(self.input_dir.split('\\')[-1])
-        input_tifs = [result_dir + '\\' + tif for tif in os.listdir(result_dir) if tif.endswith('.tif')]  # 输入的tif文件路径
+        input_tifs = [self.input_dir + '\\' + tif for tif in os.listdir(self.input_dir) if tif.endswith('.tif')]  # 输入的tif文件路径
         threshold_value = 0.01  # 阈值，根据实际需要修改
         submerged_area_all = {}
         for input_tif in input_tifs:
