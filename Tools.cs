@@ -75,6 +75,19 @@ public class Tools
         }
     }
 
+    public static string GetBottomDirectory(string sourceDir)    // 获取底层文件夹路径
+    {
+        var dir = new DirectoryInfo(sourceDir);
+
+        if (!dir.Exists)
+            return "";
+
+        if (dir.GetDirectories().Length == 0)
+            return sourceDir;
+
+        return GetBottomDirectory(dir.GetDirectories()[0].FullName);
+    }
+
     public static void PostRequest(string url, string jsonPath)     // 发送POST请求
     {
         using (var client = new HttpClient())
@@ -87,4 +100,11 @@ public class Tools
             }
         }
     }
+
+    public static void Pause()    // 暂停等待用户响应
+    {
+        Console.WriteLine("请在模型运行完毕后按回车键继续...");
+        Console.ReadLine();
+    }
+
 }

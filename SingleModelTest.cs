@@ -27,7 +27,7 @@ public class SingleModelTest      //单实例模型测试类
         }
     }
 
-    public void CopyShapeFiles()   //搜索并复制地理空间数据
+    public virtual void CopyShapeFiles()   //搜索并复制地理空间数据
     {
         if (! Directory.Exists(modelInfo.GisPath))
         {
@@ -117,7 +117,7 @@ public class SingleModelTest      //单实例模型测试类
         var finalFiles = Directory.GetFiles(modelInfo.OutputPath, "*", SearchOption.AllDirectories).Select(f => new FileInfo(f)).ToList();
 
         // 比较初始状态和最终状态
-        var changed = initialFiles.Count != finalFiles.Count;
+        var changed = initialFiles.Count < finalFiles.Count;
 
         if (changed)
         {
@@ -177,7 +177,7 @@ public class SingleModelTest      //单实例模型测试类
                 ModifyFlowFiles();
                 RunModel();
                     
-                if (IsSuccess)
+                if (IsSuccess)    // 如果模型运行成功则接着进行后处理
                 {
                     Postprocess();
                     CalculateSubmergedArea();

@@ -7,6 +7,7 @@
 import os
 import sys
 import re
+import struct
 from tqdm import tqdm
 import pandas as pd
 import geopandas as gpd
@@ -127,7 +128,7 @@ class PostProcessing():
         submerged_area_all = {}
         for dat in tqdm(input_dats, desc='数据转换中...', unit='个'):
             # 读取并创建网格
-            with open(dat, 'r') as file:
+            with open(dat, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
             new_lines = ['x1,y1,x2,y2,x3,y3,U,V,H\n'] + lines[1:]  # 修改表头
             with open(dat.replace('.dat', '.csv'), 'w') as file:
@@ -285,6 +286,59 @@ class PostProcessing():
             submerged_area_all[f.split('_')[-1].replace('.asc', '')] = asc_to_shp(self.input_dir+'\\'+f).sum()
         max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
 
+    def HubeiHydrodynamic(self):
+        submerged_area_all = parse_dat_file(self.input_dir + '\\' + "X2DProcess.dat")
+        max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
+
+    def HunanHydrodynamic(self):
+        self.HubeiHydrodynamic()
+
+    def YunnanHydrodynamic(self):
+        self.HubeiHydrodynamic()
+
+    def GuangxiHydrodynamic(self):
+        with open(self.input_dir + '\\' + "lj007_result.json", 'r', encoding='utf-8') as f:
+            data_str = f.read()
+            data_dic = json.loads(data_str)
+
+        area_time = {}
+        for data in data_dic['data']:
+            for a in data['data']:
+                if a['time'] not in area_time.keys():
+                    area_time[a['time']] = 0
+                if a['H'] > 0.01:
+                    area_time[a['time']] += 1
+
+        max_submerged_area(area_time, self.output_dir, self.multiple)
+
+    def JiangxiHydrodynamic(self):
+        txt = [self.input_dir + '\\' + tif for tif in os.listdir(self.input_dir) if tif.endswith('.txt')]
+        with open(txt[0], 'r') as file:
+            all_text = file.read()
+            data_dic = json.loads(all_text)
+
+        submerged_area_all = pd.Series(data_dic["ModelRunnerList"][0]["HArray"])
+        max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
+        os.remove(txt[0])
+
+    def BingtuanHydrodynamic(self):
+        txt = [self.input_dir + '\\' + tif for tif in os.listdir(self.input_dir) if tif.endswith('.txt')]
+        submerged_area_all = {}
+        for t in txt:
+            df = pd.read_csv(t, header=None, sep='\t')
+            submerged_area_all[t.split('\\')[-1].replace('.txt', '')] = df[df.iloc[:, 2] >= 0.01].iloc[:,2].count()
+
+        max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
+
+    def JilinHydrodynamic(self):
+        self.JiangxiHydrodynamic()
+
+    def HenanHydrodynamic(self):
+        self.JiangxiHydrodynamic()
+
+    def ShanxiHydrodynamic(self):
+        self.HubeiHydrodynamic()
+
     def GuangdongSubmerged(self):
         input_tifs = [self.input_dir + '\\' + tif for tif in os.listdir(self.input_dir) if tif.endswith('.tif')]  # 输入的tif文件路径
         threshold_value = 0.01  # 阈值，根据实际需要修改
@@ -396,6 +450,12 @@ class PostProcessing():
         self.FujianSubmerged()
 
     def XizangSubmerged(self):
+        self.FujianSubmerged()
+
+    def ChongqingSubmerged(self):
+        self.FujianSubmerged()
+
+    def HainanSubmerged(self):
         self.FujianSubmerged()
 
 

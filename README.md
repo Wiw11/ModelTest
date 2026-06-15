@@ -57,7 +57,7 @@ cd ModelTest
 # 运行示例
 dotnet run Guizhou Hydrodynamic   # 循环运行贵州省水动力学模型的多个实例
 dotnet run Guangdong Submerged true    # 异步运行广东省简化淹没模型的多个实例
-dotnet run Shandong Hydrodynamic     # 运行山东省水动力模型的002_WEB03008T0000000实例
+dotnet run Shandong Hydrodynamic 002_WEB03008T0000000     # 运行山东省水动力模型的002_WEB03008T0000000实例
 ```
 
 ## 命令行参数

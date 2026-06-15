@@ -51,6 +51,7 @@ public class ModelTestController
 
     public async Task RunIteratively(bool async = false)     // 多实例循环计算
     {
+        model.SourcePath = @"\\192.168.9.107\model_test\2024年广西水动力学模型成果\2024年度水动力模型建设成果";
         var structDirs = Directory.GetDirectories(model.SourcePath, "*结构数据*", SearchOption.AllDirectories);
 
         if (!File.Exists(Path.Combine(ResultPathRoot, "conclusion.csv")))     // 增量写入，不清空
@@ -133,8 +134,8 @@ public class ModelTestController
         
         if (singleModelTest.IsSuccess && analysis.RowCount() >= 3)
         {   
-            if (Convert.ToDouble(analysis[0,1]) <= Convert.ToDouble(analysis[1,1]) && 
-                Convert.ToDouble(analysis[1,1]) <= Convert.ToDouble(analysis[2,1]))
+            if (Convert.ToDouble(analysis[0,1]) < Convert.ToDouble(analysis[1,1]) && 
+                Convert.ToDouble(analysis[1,1]) < Convert.ToDouble(analysis[2,1]))
             {
                 lock (_fileLock)
                 {

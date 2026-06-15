@@ -4,13 +4,16 @@
 @Author：Cao Duanxiang
 @Date：2026/01/07
 '''
+import os
 import json
+import struct
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import rasterio
 from rasterio.features import shapes
+from typing import List, Dict, Tuple
 
 def submerged_area_sum(shp,title):
     '''
@@ -141,3 +144,82 @@ def visualize_depth(gdf, title, output_png_path):
     gdf.plot(ax=ax, column=title, cmap='viridis', legend=True)
     fig.savefig(output_png_path)
     plt.close()
+
+def parse_dat_file(file_path: str) -> Dict:
+    '''
+    解析.dat二进制文件
+    
+    Parameters
+    ----------
+    file_path : str
+        .dat文件路径
+    
+    Returns
+    -------
+    dict
+
+    '''
+    result = {
+        'cellcount': 0,
+        'time_steps': []
+    }
+
+    depth_time = {}
+    
+    with open(file_path, 'rb') as f:
+        # 读取文件头
+        # 第一个int (4字节，无意义标识)
+        marker1 = struct.unpack('i', f.read(4))[0]
+        
+        # 第二个int (4字节，无意义标识)
+        marker2 = struct.unpack('i', f.read(4))[0]
+        
+        # cellcount (4字节，网格数量)
+        cellcount = struct.unpack('i', f.read(4))[0]
+        result['cellcount'] = cellcount
+        
+        # int64 (8字节，无意义标识)
+        marker3 = struct.unpack('q', f.read(8))[0]
+        
+        # 循环读取每个时间步的数据
+        time_step_count = 0
+        while True:
+            # 读取当前时间 t (double, 8字节)
+            t_bytes = f.read(8)
+            if len(t_bytes) < 8:
+                break  # 文件结束
+            
+            t = struct.unpack('d', t_bytes)[0]
+            
+            # 读取该时间步所有网格单元的数据
+            grid_data = []
+            for i in range(cellcount):
+                # 每个网格单元6个float变量: zi, h, u, v, speed, angle
+                cell_bytes = f.read(4 * 6)  # 24字节
+                if len(cell_bytes) < 24:
+                    raise ValueError(f"时间步 {t}: 网格单元 {i} 数据不完整")
+                
+                zi, h, u, v, speed, angle = struct.unpack('ffffff', cell_bytes)
+                grid_data.append({
+                    'grid_id': i,
+                    'zi': zi,      # 水位
+                    'h': h,        # 水深
+                    'u': u,        # x方向速度
+                    'v': v,        # y方向速度
+                    'speed': speed, # 合速度
+                    'angle': angle  # 合速度方向
+                })
+            
+            # 转换为DataFrame
+            df = pd.DataFrame(grid_data)
+            
+            depth_time[str(time_step_count)] = df[df['h'] > 0.01]['h'].sum()
+            
+            time_step_count += 1
+            if time_step_count % 10 == 0:
+                print(f"已解析 {time_step_count} 个时间步...")
+    
+    print(f"\n解析完成!")
+    print(f"总时间步数: {len(result['time_steps'])}")
+    
+    return depth_time

@@ -4,8 +4,8 @@ class Program
 {
     static async Task Main (string[] args)
     {
-        ModelTestController controller = new ModelTestController(args[0], args[1]);
-        // ModelTestController controller = new ModelTestController("Guizhou","Hydrodynamic");
+        // ModelTestController controller = new ModelTestController(args[0], args[1]);
+        ModelTestController controller = new ModelTestController("Guangxi","Hydrodynamic");
 
         if (args.Length == 3)
         {
