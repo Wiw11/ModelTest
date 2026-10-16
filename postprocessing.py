@@ -162,17 +162,7 @@ class PostProcessing():
         max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
 
     def BeijingHydrodynamic(self):
-        input_json = self.input_dir + '\\Result.json'
-        with open(input_json, 'r', encoding='utf-8') as f:
-            data_str = f.read()
-            data_ls = json.loads(data_str)
-
-        submerged_area_all = {}
-        for data in tqdm(data_ls, desc='数据转换中...'):
-            sr = pd.Series(data['h'])
-            submerged_count = sr[sr >= 0.01].count()
-            submerged_area_all[data['time']] = submerged_count
-        max_submerged_area(submerged_area_all, self.output_dir, self.multiple)
+        self.HubeiHydrodynamic()
 
     def HainanHydrodynamic(self):
         result_txt = self.input_dir + '\\CellResult.txt'
@@ -297,7 +287,7 @@ class PostProcessing():
         self.HubeiHydrodynamic()
 
     def GuangxiHydrodynamic(self):
-        with open(self.input_dir + '\\' + "lj007_result.json", 'r', encoding='utf-8') as f:
+        with open(self.input_dir + '\\' + "lj007_{}.json".format(self.multiple), 'r', encoding='utf-8') as f:
             data_str = f.read()
             data_dic = json.loads(data_str)
 
@@ -456,6 +446,9 @@ class PostProcessing():
         self.FujianSubmerged()
 
     def HainanSubmerged(self):
+        self.FujianSubmerged()
+
+    def TianjinSubmerged(self):
         self.FujianSubmerged()
 
 

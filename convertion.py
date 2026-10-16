@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import rasterio
 from rasterio.features import shapes
-from typing import List, Dict, Tuple
+from typing import Dict
+from struct import unpack
+
 
 def submerged_area_sum(shp,title):
     '''
@@ -223,3 +225,74 @@ def parse_dat_file(file_path: str) -> Dict:
     print(f"总时间步数: {len(result['time_steps'])}")
     
     return depth_time
+
+def binary_to_json(filename: str):
+    '''
+    将二进制文件转换为JSON格式
+    
+    Parameters
+    ----------
+    file_path : str
+        二进制文件路径
+    
+    Returns
+    -------
+    list
+
+    '''
+    f = open(filename, "rb")
+    default134= int.from_bytes(f.read(4), byteorder='little')
+    default2 = int.from_bytes(f.read(4), byteorder='little')
+    cellcount = int.from_bytes(f.read(4), byteorder='little')
+    cellsize = int.from_bytes(f.read(8), byteorder='little')
+
+    with open(filename, "rb") as f:
+        aa = f.read()
+    timesteps = int((len(aa) - 4 - 4 - 4 - 8) / (cellcount * 6 * 4 + 8))
+
+    with open(filename, "rb") as f:
+        f.read(20)
+
+        time_list = []
+        result_list = []
+
+        for i in range(0, timesteps):
+            time_byte = f.read(8)
+            time_float = unpack('d', time_byte)
+            time = time_float[0]
+            zi_list = []
+            h_list = []
+            u_list = []
+            v_list = []
+            speed_list = []
+            angle_list = []
+            numLength = 3
+            for j in range(0, cellcount):
+                zi = unpack('f', f.read(4))
+                zi_list.append(round(zi[0], numLength))
+                h = unpack('f', f.read(4))
+                h_list.append(round(h[0], numLength))
+                u = unpack('f', f.read(4))
+                u_list.append(round(u[0], numLength))
+                v = unpack('f', f.read(4))
+                v_list.append(round(v[0], numLength))
+                speed = unpack('f', f.read(4))
+                speed_list.append(round(speed[0], numLength))
+                angle = unpack('f', f.read(4))
+                angle_list.append(round(angle[0], numLength))
+            result = {
+                "time": str(time),
+                "zi": zi_list,
+                "h": h_list,
+                "u": u_list,
+                "v": v_list,
+                "speed": speed_list,
+                "angle": angle_list
+            }
+            result_list.append(result)
+    return result_list
+
+if __name__ == '__main__':
+    binary_file = r"D:\Projects\ModelTest\Hydrodynamic\Beijing\BJWCCV0000000R0000\OutputData\X2DProcess.dat"
+    re = binary_to_json(binary_file)
+    print(re)

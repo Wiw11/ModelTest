@@ -250,13 +250,16 @@ public class GuangxiHydrodynamic: SingleModelTest
 {
     public GuangxiHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
     {
-        modelInfo.SourcePath = @"\\192.168.9.107\model_test\2024年广西水动力学模型成果\2024年度水动力模型建设成果";
     }
 
     public override void Preprocess()
     {
         RunWithConsole = true;
-        // File.Copy(Path.Combine(modelInfo.TestPath,"lj007（网格面）.json"),Path.Combine(modelInfo.InputPath,"lj007（网格面）.json"),true);
+        DirectoryInfo sourceDataDir = new DirectoryInfo(Path.Combine(modelInfo.TestPath, "水动力学模型文件"));
+        foreach(DirectoryInfo subDir in sourceDataDir.GetDirectories())
+        {
+            Tools.CopyDirectory(subDir.FullName, Path.Combine(modelInfo.TestPath, "data", "config", subDir.Name), true);
+        }
     }
 
     public override void ModifyFlowFiles()
@@ -265,11 +268,13 @@ public class GuangxiHydrodynamic: SingleModelTest
         string jsonContent = File.ReadAllText(modelInfo.InputPath);
         JsonNode? node = JsonNode.Parse(jsonContent);
 
+        // node["requestId"] = $"test{CurrentMultiple}";
+
         if (node != null && node["inflow"] != null)
         {
             foreach (var q in node["inflow"]!.AsArray())
             {
-                if (q != null && q["data"] != null)
+                if (q != null && q["data"] != null && q["boundCode"]?.GetValue<string>()?.Contains("SL") != true)
                 {
                     var dataArray = q["data"]!.AsArray();
                     var newData = new JsonArray();
@@ -496,12 +501,20 @@ public class GansuHydrodynamic: AnhuiHydrodynamic
     }
 }
 
-public class BeijingHydrodynamic: JiangxiHydrodynamic
+public class BeijingHydrodynamic: SingleModelTest
 {
     public BeijingHydrodynamic(double multiple, ModelInfo model) : base(multiple, model)
     {
-        modelInfo.SourcePath = @"\\192.168.9.107\model_test\0608\2024年度北京市水动力模型建设成果\2024年度水动力模型建设成果\白马关水动力模型";
+        modelInfo.SourcePath = @"\\192.168.9.115\model_test\0608\2024年度北京市水动力模型建设成果\2024年度水动力模型建设成果\白马关水动力模型";
     }
+}
+
+public class QinghaiHydrodynamic: SingleModelTest
+{
+    public QinghaiHydrodynamic(double multiple, ModelInfo model): base(multiple, model)
+    {
+    }
+
 }
 
 
@@ -808,7 +821,18 @@ public class JiangxiSubmerged: SingleModelTest
 {
     public JiangxiSubmerged(double multiple, ModelInfo model) : base(multiple, model)
     {
-        modelInfo.SourcePath = @"\\192.168.9.106\model_test\江西简化淹没\2024年度简化淹没范围与水深分析模型建设成果";
+    }
+
+    public override void Preprocess()
+    {
+        string inputPath = Path.Combine(Tools.GetParentPath(modelInfo.TestPath),".running", "input");
+        Directory.Delete(inputPath, true);
+        Directory.CreateDirectory(inputPath);
+
+        foreach (var file in Directory.GetFiles(Path.Combine(modelInfo.TestPath, "模型结构参数文件")))
+        {
+            File.Copy(file, Path.Combine(inputPath, Path.GetFileName(file)), true);
+        }
     }
 
     public override void ExecutableCore()
@@ -819,7 +843,7 @@ public class JiangxiSubmerged: SingleModelTest
         // 运行前需手动启动.running文件夹中的服务
         // 发送请求
         string jsonFile = Directory.GetFiles(modelInfo.TestPath, "*.json", SearchOption.TopDirectoryOnly)[0];
-        Tools.PostRequest("http://127.0.0.1:8087/jlSimpleModel/simple/model/getParseData", jsonFile);
+        Tools.PostRequest("http://127.0.0.1:8087/SimplifyModel/simple/model/getParseData", jsonFile);
     }
 
     public override void ModifyFlowFiles()
@@ -828,10 +852,9 @@ public class JiangxiSubmerged: SingleModelTest
         string jsonContent = File.ReadAllText(jsonFile);
         JsonNode? node = JsonNode.Parse(jsonContent);
 
-
-        if (node != null && node["list"] != null)
+        if (node != null && node[0]["list"] != null)
         {
-            foreach (var q in node["list"]!.AsArray())
+            foreach (var q in node[0]["list"]!.AsArray())
             {
                 if (q != null && q["maxq"] != null)
                 {
@@ -842,6 +865,11 @@ public class JiangxiSubmerged: SingleModelTest
 
         // 保存
         File.WriteAllText(jsonFile, node!.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    public override void Postprocess()
+    {
+        Tools.CopyBottomFile(modelInfo.OutputPath, modelInfo.OutputPath);
     }
 }
 
@@ -933,4 +961,82 @@ public class XinjiangSubmerged: SingleModelTest
     {
     }
 
+}
+
+public class TianjinSubmerged: AnhuiSubmerged
+{
+    public TianjinSubmerged(double multiple, ModelInfo model) : base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        File.WriteAllText(Path.Combine(modelInfo.TestPath, "run.bat"), $".\\{modelInfo.MainFile} inundate -c .\\setup-inundate-example.conf -o .\\results");
+        modelInfo.MainPath = Path.Combine(modelInfo.TestPath, "run.bat");
+    }
+
+    public override void ModifyConfigFiles(){}
+
+}
+
+public class SichuanSubmerged: SingleModelTest
+{
+    public SichuanSubmerged(double multiple, ModelInfo model): base(multiple, model)
+    {
+    }
+}
+
+public class ZhejiangSubmerged: AnhuiSubmerged
+{
+    public ZhejiangSubmerged(double multiple, ModelInfo model): base(multiple, model)
+    {
+    }
+
+    public override void Preprocess()
+    {
+        File.WriteAllText(Path.Combine(modelInfo.TestPath, "run.bat"), $".\\main.exe --dem .\\dem.tif --flood .\\mask.shp --section .\\section.shp --depth .\\z.csv --output .\\results");
+        modelInfo.MainPath = Path.Combine(modelInfo.TestPath, "run.bat");
+    }
+
+    public override void ModifyConfigFiles()
+    {
+    }
+}
+
+public class YunnanSubmerged: SingleModelTest
+{
+    public YunnanSubmerged(double multiple, ModelInfo model): base(multiple, model)
+    {
+    }
+}
+
+public class ShandongSubmerged: AnhuiSubmerged
+{
+    private string initOutput = string.Empty;    // 项目根目录
+
+    public ShandongSubmerged(double multiple, ModelInfo model): base(multiple, model)
+    {
+        initOutput = modelInfo.OutputPath;
+    }
+
+    public override void Preprocess()
+    {
+        File.Copy(Path.Combine(modelInfo.TestPath, "ia_village_section.xlsx"), Path.Combine(modelInfo.TestPath, "basin", "ia_village_section.xlsx"), true);
+        File.WriteAllText(Path.Combine(modelInfo.TestPath, "run.bat"), $"java -jar .\\{modelInfo.MainFile}");
+        modelInfo.MainPath = Path.Combine(modelInfo.TestPath, "run.bat");
+    }
+
+    public override void ModifyConfigFiles()
+    {}
+
+    public override void ModifyFlowFiles()
+    {
+        base.ModifyFlowFiles();
+        modelInfo.OutputPath = initOutput;
+    }
+
+    public override void Postprocess()
+    {
+        modelInfo.OutputPath = Tools.GetBottomDirectory(initOutput);
+    }
 }
